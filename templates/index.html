@@ -1,20 +1,27 @@
-{% extends 'base.html' %} {% block title %}Home{% endblock %} {% block content
-%}
-
-<div class="content">
-  <h2>Shorten your URL, not your life</h2>
-  <form action="{{ url_for('index') }}" class="form" method="post">
-    {% for field in form %} {% for error in field.errors %}<span
-      class="error"
-      >{{ error }}</span
-    >{% endfor %}
-    <div class="input">
-      {{ field.csrf_token }}
-      {{ field(placeholder="Enter full URL", class="input__url" ) }}
-      {% endfor %}
-      <input type="submit" class="btn" value="Shorten URL &raquo;" />
+{% extends 'base.html' %} {% block title %}Home{% endblock %}
+{% block content %}
+<form class="form" method="post" action="#">
+    <div class="content" style="padding-top: 20px">
+        <div class="input-group form-group-no-border input-lg">
+            <span class="input-group-addon">
+                <i class="now-ui-icons text_caps-small"></i>
+            </span>
+            <input name="oldURL" class="form-control" placeholder="Please enter URL...">
+        </div>
     </div>
-  </form>
-</div>
 
+    <div style="padding: 20px; margin-bottom: 1rem; color: #ff5555; font-weight: bolder; font-size: large">
+        {{ get_flashed_messages()[0] }}
+    </div>
+
+    <div class="footer text-center" style="padding-top: 0px">
+        <input type="submit" class="btn btn-primary btn-round btn-lg btn-block" value="Shorten URL &raquo;&raquo;"/>
+    </div>
+    <div class="footer text-center" style="padding-top: 0px">
+        <a href="stats" class="btn btn-primary btn-round btn-lg btn-block">Show all URL</a>
+    </div>
+    <div class="footer text-center" style="padding-top: 0px">
+        <a href="{{ url_for('delete_all_url') }}" class="btn btn-primary btn-round btn-lg btn-block" style="background-color: brown">Clear all existed URL</a>
+    </div>
+</form>
 {% endblock %}

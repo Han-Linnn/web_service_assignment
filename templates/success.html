@@ -2,31 +2,41 @@
 content %}
 
 
-<script src="{{ url_for('static', filename="js/clipboard.min.js") }}"></script>
+    {#<script src="{{ url_for('static', filename="js/clipboard.min.js") }}"></script>#}
+    {##}
+    {#<script>#}
+    {#    var clipboard = new ClipboardJS(".btn");#}
+    {#    clipboard.on("error", function(e) {#}
+    {#        console.log(e);#}
+    {#    });#}
+    {#</script>#}
 
-<script>
-    var clipboard = new ClipboardJS(".btn");
-    clipboard.on("error", function(e) {
-        console.log(e);
-    }); 
-</script>
+    <div class="footer text-center" style="padding-bottom: 20px; font-weight: bolder; color: #edde34; font-size: large">
+        Your URL was successfully shortened!
+    </div>
+    <div class="link" style="padding-bottom: 20px; font-size: medium">
+        http://127.0.0.1:5000/{{ short_url }}
+    </div>
+    <div class="footer text-center" style="padding-bottom: 10px">
+        <a href="{{ url_for('index') }}" class="btn btn-primary btn-round btn-lg btn-block">Back to Home</a>
+    </div>
 
-<div class="content">
-  <h2>Your URL was successfully shortened!</h2>
+    {#<div class="content">#}
+    {#  <h2>Your URL was successfully shortened!</h2>#}
+    {##}
+    {#  <div class="input">#}
+    {#    <a#}
+    {#      class="btn btn__copy"#}
+    {#      data-clipboard-text='{{ url_for('index', _external=True) }}{{ code }}'>Copy</a>#}
+    {#    <input type="text" value=" your.url/{{ code }}" />#}
+    {##}
+    {#  </div>#}
+    {#  <div class="original-link">Redirects to: <img#}
+    {#    src="https://www.google.com/s2/favicons?domain={{ old }}"#}
+    {#   height="16px" alt="favicon"#}
+    {#  /> {{ old }}</div>#}
+    {#</div>#}
 
-  <div class="input">
-    <a
-      class="btn btn__copy"
-      data-clipboard-text='{{ url_for('index', _external=True) }}{{ code }}'>Copy</a>
-    <input type="text" value=" your.url/{{ code }}" />
-    
-  </div>
-  <div class="original-link">Redirects to: <img
-    src="https://www.google.com/s2/favicons?domain={{ old }}"
-   height="16px" alt="favicon"
-  /> {{ old }}</div>
-</div>
-
-<script src="{{ url_for('static', filename="js/main.js") }}"></script>
+    <script src="{{ url_for('static', filename="js/main.js") }}"></script>
 
 {% endblock %}

@@ -1,61 +1,136 @@
 import string
-from random import choice
-from flask import render_template, request, redirect, abort, send_from_directory
+from random import choices
+import re
+
+from flask import render_template, request, redirect, url_for, make_response, flash
 from app import app, db
-from url.forms import UrlForm
+# from url.forms import UrlForm
 from url.models import Url
-from settings import STATIC_DIR
+
+
+# from settings import STATIC_DIR
+
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
+
+def shorten_url():
+    # get all letter and digits
+    chars = string.ascii_letters + string.digits
+    while True:
+        rand_chars = choices(chars, k=3)
+        rand_chars = "".join(rand_chars)
+        short_url = Url.query.filter_by(short=rand_chars).first()
+        if not short_url:
+            return rand_chars
 
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
-
     if request.method == 'POST':
-        def gen():
-            chars = string.ascii_letters + string.digits
-            length = 3
-            code = ''.join(choice(chars) for x in range(length))
-            print("Checking", code)
-            exists = db.session.query(
-                db.exists().where(Url.new == code)).scalar()
-            if not exists:
-                print("Your new code is:", code)
-                return code
-        code = gen()
-        while code is None:
-            code = gen()
+        url_received = request.form["oldURL"]
+        if url_received:
+            if not re.match(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+', url_received):
+                # print("URL is valid, allow to be shortened.")
+                flash("URL is invalid! Please try again")
+                return render_template("index.html")
 
-    if request.method == 'POST' and code is not None:
-        form = UrlForm(request.form)
-        if form.validate_on_submit():
-            url = form.save_url(Url(new=code))
-            db.session.add(url)
-            db.session.commit()
-            return render_template("success.html", code=code, old=url.old)
+            # Check if URL already exists in DB
+            found_url = Url.query.filter_by(long=url_received).first()
+            if found_url:
+                # Return short url if found
+                return redirect(url_for("display_short_url", url=found_url.short))
+            else:
+                short_url = shorten_url()
+                new_url = Url(url_received, short_url)
+                db.session.add(new_url)
+                db.session.commit()
+                return redirect(url_for("display_short_url", url=short_url))
         else:
-            print("Validation failed")
+            flash("Please enter URL")
+            return render_template("index.html")
     else:
-        form = UrlForm()
-    return render_template("index.html", form=form)
+        return render_template('index.html')
 
 
-@app.route('/<new>')
-def redirect_to_old(new):
-    new = Url.query.filter_by(new=new).first()
-    if new is None:
-        abort(404)
+# display the short url that just generated
+@app.route('/redirect/<url>')
+def display_short_url(url):
+    check_url = Url.query.filter_by(short=url).first()
+    host_number = request.host
+    if check_url:
+        response = make_response(render_template('success.html', short_url=url, host_number=host_number), 301)
+        response.headers['value'] = check_url.short
+        return response
     else:
-        new.hits = new.hits+1
-        db.session.add(new)
+        return render_template('404.html'), 404
+
+
+# use short url redirect to long url
+@app.route('/<short_url>')
+def redirect_to_old(short_url):
+    long_url = Url.query.filter_by(short=short_url).first()
+    if long_url:
+        return redirect(long_url.long)
+    else:
+        return render_template('404.html'), 404
+
+
+@app.route('/update_url/<short_url>', methods=['POST'])
+def get_update_data(short_url):
+    if request.method == 'POST':
+        form = request.form
+        new_url = form.get('new_url')
+        return redirect(url_for("update", new_url=new_url, short_url=short_url)), 200
+    else:
+        flash("Updated Error 1 !")
+        return redirect(url_for("stats"))
+
+
+@app.route('/update/<new_url>/<short_url>', methods=['PUT'])
+def update(new_url, short_url):
+    if new_url and short_url:
+        urls = Url.query.filter_by(short=short_url).first()
+        urls.short = str(new_url)
         db.session.commit()
-        return redirect(new.old)
+        flash("Successfully Updated !")
+        return redirect(url_for("stats"))
+    else:
+        flash("Updated Error 2 !")
+        return redirect(url_for("stats"))
+
+
+@app.route('/deleteSingle/<short_url>', methods=['DELETE'])
+def delete_single_url(short_url):
+    x = Url.query.filter_by(short=short_url).first()
+    if x:
+        db.session.delete(x)
+        db.session.commit()
+        return redirect(url_for("stats"))
+    else:
+        return render_template('400.html'), 400
+
+
+@app.route('/deleteAll')
+def delete_all_url():
+    check_empty = db.session.query(Url).first()
+    if check_empty:
+        db.session.query(Url).filter().delete()
+        db.session.commit()
+        flash("Successfully Clear All !")
+        return redirect(url_for("index"))
+    else:
+        flash("No data in DataBase !")
+        return redirect(url_for("index"))
 
 
 @app.route("/stats")
 @app.route("/stats/<int:page>")
 def stats(page=1):
-    stats = Url.query.order_by(Url.id.desc()).paginate(page, 10, False)
-    return render_template("stats.html", stats=stats)
+    data_list = Url.query.order_by(Url.id.desc()).paginate(page, 5, False)
+    return render_template("stats.html", stats=data_list), 200
 
 
 @app.errorhandler(404)
@@ -63,6 +138,6 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 
-@app.route('/favicon.ico')
-def static_from_root():
-    return send_from_directory(STATIC_DIR, request.path[1:])
+@app.errorhandler(400)
+def response_error(e):
+    return render_template("400.html", message='ERROR'), 400

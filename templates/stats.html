@@ -1,46 +1,119 @@
-{% extends 'base.html' %} {% block title %}All Submissions{% endblock %} {%
-block content %}
-<div class="content">
-  <table class="table">
-    <tr>
-      <!-- <th>ID</th> -->
-      <th class="th-1">New URL</th>
-      <th>Old URL</th>
-      <th class="th-3">Hits</th>
-      <!--    <th>Created</th> -->
-    </tr>
-    {% for url in stats.items %}
-    <tr>
-      <!-- <td>{{ url.id }}</td> -->
-      <td>
-        <img src="{{ url_for('static', filename="chain.svg") }}" width=16px
-        alt=""> /<a
-          href="{{ url_for('index') }}{{ url.new }}"
-          target="_blank"
-          >{{ url.new }}</a
-        >
-      </td>
-      <td class="old-url">
-        <img
-          src="https://www.google.com/s2/favicons?domain={{ url.old }}"
-          alt="favicon"
-        />
-        {{ url.old }}
-      </td>
-      <td class="td-3">{{ url.hits }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-</div>
+<!DOCTYPE html>
+<html lang="en">
 
-<div style="text-align: center; padding-top: 5px; font-weight: 600;">
-  <p style="color:#777">
-    {% if stats.has_prev %}
-    <a href="{{url_for('stats',page=stats.prev_num)}}">&lt;&lt; Newer </a>
-    {% else %} &lt;&lt; Newer {% endif %} {% if stats.has_next %}
-    <a href="{{url_for('stats',page=stats.next_num)}}">Older &gt;&gt;</a>
-    {% else %} Older &gt;&gt; {% endif %}
-  </p>
-</div>
+<head>
+    <meta charset="utf-8"/>
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ url_for('static', filename='img/apple-icon.png') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+    <title>URL Shortener</title>
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no'
+          name='viewport'/>
+    <!--     Fonts and icons     -->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css"/>
+    <!-- CSS Files -->
+    <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='css/now-ui-kit.css') }}" rel="stylesheet"/>
+    <!-- CSS Just for demo purpose, don't include it in your project -->
+    <link href="{{ url_for('static', filename='css/demo.css') }}" rel="stylesheet"/>
+    {#    <!-- Canonical SEO -->#}
+    {#    <link rel="canonical" href="" />#}
+    {#    <!--  Social tags      -->#}
+    {#    <meta name="keywords" content="">#}
+    {#    <meta name="description" content="">#}
+</head>
 
-{% endblock %}
+<body class="login-page sidebar-collapse">
+<div class="page-header" filter-color="orange">
+    <div class="page-header-image"
+         style="background-image:url({{ url_for('static', filename='img/login.jpg') }})"></div>
+    <div class="container">
+        <div class="col-md-4 content-center">
+            <div class="header header-primary text-center">
+                <h1>
+                    <a href="{{ url_for('index') }}"
+                       style="color: #fff;  letter-spacing:4px; text-align:center; font-weight: bold; text-decoration: none;">URL
+                        Shortener</a>
+                </h1>
+            </div>
+            <div style="padding: 20px; margin-bottom: 1rem; color: {{ font_color }}; font-weight: bolder; font-size: large">
+                {{ get_flashed_messages()[0] }}
+            </div>
+            <table class="table">
+                <tr>
+                    <!-- <th>ID</th> -->
+                    <th style="width: 30%; text-align: center">Shortened URL</th>
+                    <th style="text-align: center">Original URL</th>
+                    <th style="width: 30%; text-align: center">Operation</th>
+                    <!--    <th>Created</th> -->
+                </tr>
+                {% for url in stats.items %}
+                    <tr>
+                        <!-- <td>{{ url.id }}</td> -->
+                        <td>
+                            <img src="{{ url_for('static', filename="chain.svg") }}" width=16px
+                                 alt=""> /<a href="{{ url_for('redirect_to_old', short_url=url.short) }}" target="_blank">{{ url.short }}</a>
+                            <form method="post" action="{{ url_for('get_update_data', short_url=url.short) }}">
+                                <input type="hidden" name="_method" value="PUT" >
+                                <div>
+                                    <input name="new_url" type="text" placeholder="Enter new short URL"/>
+                                </div>
+                                <div>
+                                    <button type="submit">
+                                        UPDATE
+                                    </button>
+                                </div>
+                            </form>
+                        </td>
+                        <td class="old-url">
+                            {{ url.long }}
+                        </td>
+                        <td class="td-3">
+                            <a href="{{ url_for('delete_single_url', short_url=url.short) }}">
+                                DELETE
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+            <div style="text-align: center; padding-top: 5px; font-weight: 600;">
+                <p style="color:#777">
+                    {% if stats.has_prev %}
+                        <a href="{{ url_for('stats',page=stats.prev_num) }}">&lt;&lt; Newer </a>
+                    {% else %} &lt;&lt; Newer {% endif %} {% if stats.has_next %}
+                    <a href="{{ url_for('stats',page=stats.next_num) }}">Older &gt;&gt;</a>
+                {% else %} Older &gt;&gt; {% endif %}
+                </p>
+            </div>
+{##}
+{#            <div class="footer text-center" style="padding-bottom: 10px">#}
+{#                <a href="{{ url_for('index') }}" class="btn btn-primary btn-round btn-lg btn-block">Back to Home</a>#}
+{#            </div>#}
+        </div>
+    </div>
+</div>
+</body>
+<!--   Core JS Files   -->
+<script src="{{ url_for('static', filename='js/core/jquery.3.2.1.min.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='js/core/popper.min.js') }}" type="text/javascript"></script>
+<script src="{{ url_for('static', filename='js/core/bootstrap.min.js') }}" type="text/javascript"></script>
+<!--  Plugin for Switches, full documentation here: http://www.jque.re/plugins/version3/bootstrap.switch/ -->
+<script src="{{ url_for('static', filename='js/plugins/bootstrap-switch.js') }}"></script>
+<!--  Plugin for the Sliders, full documentation here: http://refreshless.com/nouislider/ -->
+<script src="{{ url_for('static', filename='js/plugins/nouislider.min.js') }}" type="text/javascript"></script>
+<!--  Plugin for the DatePicker, full documentation here: https://github.com/uxsolutions/bootstrap-datepicker -->
+<script src="{{ url_for('static', filename='js/plugins/bootstrap-datepicker.js') }}" type="text/javascript"></script>
+<!-- Share Library etc -->
+<script src="{{ url_for('static', filename='js/plugins/jquery.sharrre.js') }}" type="text/javascript"></script>
+<!-- Control Center for Now Ui Kit: parallax effects, scripts for the example pages etc -->
+<script src="{{ url_for('static', filename='js/now-ui-kit.js') }}" type="text/javascript"></script>
+
+</html>
+
+
+
+
+
+

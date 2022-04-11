@@ -3,14 +3,13 @@ from app import db
 
 
 class Url(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    old = db.Column(db.String(2040))
-    new = db.Column(db.String(5), unique=True)
-    hits = db.Column(db.Integer, default=0)
-    created = db.Column(db.DateTime, default=datetime.datetime.now)
+    id = db.Column("id_", db.Integer, primary_key=True)
+    long = db.Column("long", db.String(2040))
+    short = db.Column("short", db.String(5), unique=True)
 
-    def __init__(self, *args, **kwargs):
-        super(Url, self).__init__(*args, **kwargs)
+    def __init__(self, long, short):
+        self.long = long
+        self.short = short
 
-    def __repr__(self):
-        return '<URL %s>' % self.old
+    # def __repr__(self):
+    #     return '<URL %s>' % self.long
